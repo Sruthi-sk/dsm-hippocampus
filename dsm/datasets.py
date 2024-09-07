@@ -3,6 +3,7 @@ import pathlib
 import pickle
 
 import jax
+import jax.numpy as jnp
 import numpy.typing as npt
 import tensorflow as tf
 import tf2jax
@@ -11,10 +12,21 @@ from dsm.types import Environment, Policy, TransitionDataset
 
 _POLICY_REGISTRY: dict[Environment, pathlib.Path] = {
     "Pendulum-v1": pathlib.Path("datasets/pendulum/sac/policy"),
+    # "MountainCarContinuous-v0": pathlib.Path("datasets/mountaincar/sac/policy"),
+    # "Ratinabox-v0-xy": pathlib.Path("datasets/ratinaboxPCgoal/sac/policy"),
 }
 
 _DATASET_REGISTRY: dict[Environment, pathlib.Path] = {
     "Pendulum-v1": pathlib.Path("datasets/pendulum/sac/dataset.pkl"),
+    # "MountainCarContinuous-v0": pathlib.Path("datasets/mountaincar/sac/dataset.pkl"),
+    "Ratinabox-v0-pc-teleport": pathlib.Path("datasets/ratinaboxPCteleport/simple/dataset.pkl"),
+    "Ratinabox-v0-pc-random": pathlib.Path("datasets/ratinaboxPCrandom/simple/dataset.pkl"),
+    "Ratinabox-v0-pc-highTH": pathlib.Path("datasets/ratinaboxPCrandom/high_th/dataset.pkl"),
+    "Ratinabox-v0-pc-lowTH": pathlib.Path("datasets/ratinaboxPCrandom/low_th/dataset.pkl"),
+    "Ratinabox-v0-pc-goal": pathlib.Path("datasets/ratinaboxPCgoal/sac/dataset.pkl"),
+    "Ratinabox-v0-pc-random-walls": pathlib.Path("datasets/ratinaboxPCrandom/walls/dataset.pkl"),
+    # "Ratinabox-v0-pc": pathlib.Path("datasets/ratinaboxPCgoal/sac/dataset.pkl"),
+    # "Ratinabox-v0-xy": pathlib.Path("datasets/.../sac/dataset.pkl"),
 }
 
 _MC_DATASET_REGISTRY_WITH_TRUNCATION: dict[Environment, dict[float, pathlib.Path]] = {
@@ -63,11 +75,14 @@ def make_mc_dataset(
 def load_policy(policy_path: pathlib.Path) -> Policy:
     policy = tf.saved_model.load(policy_path.as_posix())
     pure_policy_func, policy_params = tf2jax.convert_from_restored(getattr(policy, "__call__"))  # type: ignore
+    # print('DEBUG pure_policy_func ',pure_policy_func, 'policy_params ', policy_params)
 
     @jax.jit
     def policy_fn(rng: jax.random.KeyArray, observation: jax.Array) -> tuple[jax.random.KeyArray, jax.Array]:
         rng, key = jax.random.split(rng)
-        action, _ = pure_policy_func(policy_params, observation, key)
+        # action, _ = pure_policy_func(policy_params, observation, key)
+        action, _ = pure_policy_func(policy_params, jnp.squeeze(observation), key)
+        print('DEBUG action ',action)
         return rng, action
 
     return policy_fn

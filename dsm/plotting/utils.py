@@ -55,7 +55,13 @@ def return_distribution(
     )
     keys = jax.random.split(action_rng, np.prod(samples.shape[:-1]))
     keys = jnp.array(keys).reshape(*samples.shape[:-1], -1)
-    actions = jax.vmap(jax.vmap(policy))(keys, samples)
+    
+    # actions = jax.vmap(jax.vmap(policy))(keys, samples)
+    def apply_policy_to_batch(batch):
+        keys,samples = batch
+        return jax.lax.map(lambda x: policy(x[0],x[1]),(keys,samples))
+    actions = jax.lax.map(apply_policy_to_batch, (keys,samples))
+
     rewards = jax.vmap(jax.vmap(reward_fn))(samples, actions[1]).squeeze()
     assert isinstance(config.gamma, float)
     return rewards.mean(axis=-1) / (1.0 - config.gamma)

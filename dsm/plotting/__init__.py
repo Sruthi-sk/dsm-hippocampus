@@ -10,10 +10,10 @@ import numpy.typing as npt
 
 from dsm import rewards
 from dsm.configs import Config
-from dsm.plotting import pendulum, utils
 from dsm.state import FittedValueTrainState
 from dsm.types import Environment
 
+from dsm.plotting import utils, pendulum, ratinabox_xy, ratinabox_neuron
 
 @typing.runtime_checkable
 class PlotProtocol(Protocol):
@@ -31,6 +31,14 @@ class PlotProtocol(Protocol):
 
 _PLOT_BY_ENVIRONMENT: dict[Environment, PlotProtocol] = {
     "Pendulum-v1": pendulum,
+    # "MountainCarContinuous-v0":mountaincar,
+    "Ratinabox-v0-pc-random": ratinabox_neuron,
+    "Ratinabox-v0-pc-lowTH": ratinabox_neuron,
+    "Ratinabox-v0-pc-highTH": ratinabox_neuron,
+    "Ratinabox-v0-pc-teleport": ratinabox_neuron,
+    "Ratinabox-v0-pc-goal": ratinabox_neuron,
+    "Ratinabox-v0-xy": ratinabox_xy,
+    "Ratinabox-v0-pc-random-walls": ratinabox_neuron,
 }
 
 
@@ -43,6 +51,7 @@ def source_states(
 
     if not environment.startswith("dm_control/"):
         raise ValueError(f"Unknown environment: {environment!r}")
+    
     env_name = environment.removeprefix("dm_control/").removesuffix("-v0")
 
     initial_states = pathlib.Path(f"datasets/{env_name}/initial-states")
@@ -67,8 +76,8 @@ def plot_samples(
     if config.env in _PLOT_BY_ENVIRONMENT:
         plot_module = _PLOT_BY_ENVIRONMENT[config.env]
         plots = {
-            f"mmd-samples/{source.tolist()}": plot_module.plot_samples(source, state, rng, config=config)
-            for (_, source) in zip(*plot_module.source_states())
+            f"mmd-samples/{env_source.tolist()}": plot_module.plot_samples(source, state, rng, config=config,env_source = env_source) #,env_source = env_source
+            for (env_source, source) in zip(*plot_module.source_states()) #for (env_source, source)
         }
         return {k: v for k, v in plots.items() if v is not None}
 

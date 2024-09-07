@@ -83,6 +83,9 @@ class WanDBWriter(metric_writers.MetricWriter):
             self.run.log({key: value, **(metadata or {})}, step=step)
 
     def write_images(self, step: int, images: Mapping[str, Array]):
+        # when keys are too large, enumerate the sources
+        # for i, (key, value) in enumerate(images.items()):
+        #     self.run.log({f"image_{i}": [wandb.Image(value)]}, step=step)
         for key, value in images.items():
             self.run.log({key: [wandb.Image(value)]}, step=step)
 

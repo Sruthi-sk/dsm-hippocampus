@@ -27,6 +27,17 @@ from dsm.types import PyTree, TransitionDataset
 T = TypeVar("T")
 
 
+from dsm.configs import base
+config = base()
+ENVIRONMENT = config.env
+if ENVIRONMENT.startswith("Ratinabox-v0-pc"):
+    NUM_STATE_DIM_CELLS = 50
+# NUM_STATE_DIM_CELLS = 50  #math.prod(observation_spec.shape)
+# import joblib
+# PCs = joblib.load('datasets/ratinaboxPCgoal/placecells_params_latest_run.pkl')
+# NUM_STATE_DIM_CELLS = 50 #PCs['n']
+
+
 def identity(x: T) -> T:
     return x
 
@@ -78,7 +89,8 @@ class DistributionalSRDiscriminator(nn.Module):
 
         return vmap(
             vmap(
-                vmap(lambda model, z: model(z)),
+                # vmap(lambda model, z: model(z)),
+                vmap(lambda model, z: model(z, update_stats=True)),
                 **model_vmap_kwargs,
             ),
             **batch_vmap_kwargs,
@@ -90,14 +102,14 @@ class TrainStepType(enum.IntEnum):
     GENERATOR = 1
 
 
-@functools.partial(
-    jax.jit,
-    static_argnames=(
-        "config",
-        "update_which",
-    ),
-    donate_argnums=(0,),
-)
+# @functools.partial(
+#     jax.jit,
+#     static_argnames=(
+#         "config",
+#         "update_which",
+#     ),
+#     donate_argnums=(0,),
+# )
 @chex.assert_max_traces(2)
 def train_step(
     state: State,
@@ -113,6 +125,7 @@ def train_step(
         return x
 
     batch = jax.tree_util.tree_map_with_path(_cast_batch_to_dtype, batch)
+    # jax.debug.print('debug batch {bar}',bar=batch) # TimeStep(StepType , Observation , reward None , discount None)
 
     def sample(g_params: PyTree[jax.Array], context: jax.Array, key: jax.random.KeyArray) -> jax.Array:
         """context: conditioning context"""
@@ -129,11 +142,17 @@ def train_step(
         *,
         sign: float,
     ) -> tuple[jax.Array, tuple[dict[str, jax.Array], PyTree[jax.Array] | None]]:
+        ''' sign determines whether the gradients are for the generator or the discriminator.
+        calculates the Maximum Mean Discrepancy (MMD) loss which is a measure of the difference 
+        between the data distribution produced by the generator and the actual data distribution '''
         infos = {}
         horizon_rng, lhs_rng, rhs_rng = jax.random.split(rng, 3)
         # Sample from the state-discounted occupancy given the start state
+        # jax.debug.print('debug batch.observation shape {bar}',bar=batch.observation.shape)  # (batch_size, horizon + 1, num_state_dims)
         lhs = sample(g_params, batch.observation[:, 0, :], lhs_rng)
+        # jax.debug.print('debug lhs {bar}',bar=lhs.shape) # (batch_size, num_outer, num_inner, num_state_dims)
         infos["observation"] = jnp.mean(lhs)
+        # jax.debug.print('debug infos["observation"] {bar}',bar=infos["observation"])
 
         # Sample a horizon for each trajectory
         # This is unbounded but we'll truncate it later.
@@ -171,6 +190,8 @@ def train_step(
             # from the last state in the sequence. This may or may not be used in the
             # update depending on the sampled horizon and whether or not there's a terminal
             # state in this trajectory.
+
+            # # batch.observation has shape (batch_size, horizon + 1, num_state_dims) - so taking the step in the last horizon
             rhs = sample(state.generator.target_params, batch.observation[:, -1, :], rhs_rng)
             rhs_observation_sequence = jnp.concatenate(
                 (
@@ -325,6 +346,8 @@ def train_loop(
 
     def _sample_batch(key_t: jax.random.KeyArray) -> TransitionDataset:
         indices = jax.random.randint(key_t, (config.batch_size,), 0, len(data.observation) - config.horizon - 1)
+        # # randomly sample a batch of transitions from the dataset. it slices the data along the 0th dimension; 
+        # gets the transition that starts at at random indices (num:batchsize) and lasts for `config.horizon + 1` time steps.
         return jax.tree_util.tree_map(
             lambda op: jax.vmap(lambda index: jax.lax.dynamic_slice_in_dim(op, index, 1 + config.horizon, axis=0))(
                 indices
@@ -378,14 +401,20 @@ def _make_metrics(config: Config) -> Type[clu_metrics.Collection]:
 def _make_generator_state(
     rng: jax.random.KeyArray, observation_spec: specs.DiscreteArray, config: Config
 ) -> FittedValueTrainState:
-    model = DistributionalSRGenerator(config.generator, config.num_outer, math.prod(observation_spec.shape))
+    # model = DistributionalSRGenerator(config.generator, config.num_outer, math.prod(observation_spec.shape))
+
+    if ENVIRONMENT.startswith("Ratinabox-v0-pc"):
+        observation_spec_shape = NUM_STATE_DIM_CELLS
+    else:
+        observation_spec_shape = math.prod(observation_spec.shape)
+    model = DistributionalSRGenerator(config.generator, config.num_outer, num_state_dims=observation_spec_shape)  
 
     params = model.lazy_init(
         rng,
         jax.ShapeDtypeStruct(
             (
                 config.num_outer,
-                config.latent_dims + math.prod(observation_spec.shape),
+                config.latent_dims + observation_spec_shape,
             ),
             config.dtype,
         ),
@@ -409,6 +438,10 @@ def _make_discriminator_state(
         with_separate_discriminator=config.inner_separate_discriminator,
     )  # type: ignore
     params_rng, spectral_norm_rng = jax.random.split(rng)
+    if ENVIRONMENT.startswith("Ratinabox-v0-pc"):
+        observation_spec_shape = NUM_STATE_DIM_CELLS
+    else:
+        observation_spec_shape = math.prod(observation_spec.shape)
 
     variables = model.lazy_init(
         {"params": params_rng, "spectral_norm": spectral_norm_rng},
@@ -419,7 +452,7 @@ def _make_discriminator_state(
                 config.batch_size,
                 config.num_outer,
                 config.num_inner,
-                math.prod(observation_spec.shape),
+                observation_spec_shape, # math.prod(observation_spec.shape),
             ),
             config.dtype,
         ),
@@ -466,7 +499,7 @@ def load_state_and_config(
             "generator": jax.eval_shape(
                 functools.partial(_make_generator_state, config=config),
                 jax.random.PRNGKey(0),
-                env.observation_spec(),
+                env.observation_spec(), , # NUM_STATE_DIM_CELLS # 
             ),
         },
     )

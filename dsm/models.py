@@ -19,11 +19,14 @@ class MLP(nn.Module):
 
     @nn.compact
     def __call__(self, x: jax.Array, *, num_outputs: int | None = None) -> jax.Array:
+        # print('debug call of MLP')
         num_outputs = nn.merge_param("num_outputs", self.num_outputs, num_outputs)
-        for _ in range(self.num_layers):
-            x = self.module(self.num_hidden_units, dtype=self.dtype, param_dtype=self.param_dtype)(x)
+        for i in range(self.num_layers):
+            x = self.module(self.num_hidden_units, dtype=self.dtype, param_dtype=self.param_dtype)(x)  #, name=f'dense_{i}'
             x = self.activation(x)
-        return self.module(num_outputs, dtype=self.dtype, param_dtype=self.param_dtype)(x)
+        x = self.module(num_outputs, dtype=self.dtype, param_dtype=self.param_dtype)(x)  #, name='dense_output'
+
+        return x
 
 
 class ResidualMLP(nn.Module):

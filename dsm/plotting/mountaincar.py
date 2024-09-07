@@ -11,19 +11,19 @@ from dsm.configs import Config
 from dsm.plotting import utils as plotting_utils
 from dsm.state import FittedValueTrainState
 
-ENVIRONMENT = "Pendulum-v1"
+ENVIRONMENT = "MountainCarContinuous-v0"
 
 
 def source_states() -> tuple[list[Any], list[npt.NDArray]]:
-    thetas = [np.pi / 2, np.pi, np.pi * 3 / 2]
-    thetadots = [-4, 0, 4]
+    xposes = [-100, 100, 300]
+    velocities = [-4, 0, 4]
 
     states = []
     observations = []
-    for theta in thetas:
-        for thetadot in thetadots:
+    for theta in xposes:
+        for thetadot in velocities:
             states.append(np.array([theta, thetadot]))
-            observations.append(np.array([np.cos(theta), np.sin(theta), thetadot]))
+            observations.append(np.array([theta, thetadot]))
 
     return states, observations
 
@@ -34,7 +34,6 @@ def plot_samples(
     rng: jax.random.KeyArray,
     *,
     config: Config,
-    env_source = None,
 ) -> npt.NDArray:
     dataset = datasets.make_dataset(ENVIRONMENT)
 
@@ -50,20 +49,19 @@ def plot_samples(
     )
 
     # Left scatter plot
-    # # converts Cartesian coordinates to polar coordinates (thetas) and extracts velocities
-    thetas = np.arctan2(dataset.observation[:, 1], dataset.observation[:, 0]) % (2 * np.pi)
+    thetas = dataset.observation[:, 0]
     velocities = dataset.observation[:, -1]
     axs[0].scatter(thetas, velocities, alpha=0.1, s=1.0, color="grey")
 
     # Plot atom scatter & kde
     cmap = plt.get_cmap("Dark2")  # pyright: ignore
     for i in range(samples.shape[0]):
-        thetas = np.arctan2(samples[i, :, 1], samples[i, :, 0]) % (2 * np.pi)
+        thetas = samples[i, :, 0]
         velocities = samples[i, :, -1]
         axs[1].scatter(thetas, velocities, color=cmap(i), s=2.0, alpha=0.25)
 
     # Plot source state
-    theta = np.arctan2(source[1], source[0]) % (2 * np.pi)
+    theta = source[0]
     for ax in axs:
         ax.scatter(theta, source[-1], marker="x", s=64, alpha=0.8, color="red")
 

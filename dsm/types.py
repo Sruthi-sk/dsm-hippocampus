@@ -8,6 +8,13 @@ Environment = Literal[
     "WindyGridWorld-v0",
     "WindyGridWorld-top-v0",
     "WindyGridWorld-bottom-v0",
+    "Ratinabox-v0-xy",
+    "Ratinabox-v0-pc-random",
+    "Ratinabox-v0-pc-lowTH",
+    "Ratinabox-v0-pc-highTH",
+    "Ratinabox-v0-pc-teleport",
+    "Ratinabox-v0-pc-goal",
+    "MountainCarContinuous-v0",
 ]
 Policy = Callable[[jax.random.KeyArray, jax.Array], tuple[jax.random.KeyArray, jax.Array]]
 

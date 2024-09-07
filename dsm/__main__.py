@@ -123,13 +123,16 @@ def _maybe_restore_state(checkpoint_manager: orbax.checkpoint.CheckpointManager,
         return State(step=jnp.int32(step), generator=g_state, discriminator=d_state)
 
     if _CHECKPOINT_FROM.value and (checkpoint_steps := orbax.checkpoint.utils.checkpoint_steps(_CHECKPOINT_FROM.value)):
+        # print('debug _CHECKPOINT_FROM.value', _CHECKPOINT_FROM.value)
         logging.info(f"Found checkpoint directory {_CHECKPOINT_FROM.value} with steps {checkpoint_steps}.")
         latest_checkpoint_step = max(checkpoint_steps)
         if not latest_step or latest_checkpoint_step > latest_step:
             return _restore_state(latest_checkpoint_step, _CHECKPOINT_FROM.value)
     if latest_step:
+        print('debug latest_step', latest_step)
         return _restore_state(latest_step)
 
+    # print('debug checkpoint_manager',checkpoint_manager)
     logging.info("No checkpoint found.")
     return state
 
@@ -161,12 +164,15 @@ def main(_) -> None:
     _stop_progress_on_breakpoint(pbar)
 
     checkpoint_manager = orbax.checkpoint.CheckpointManager(
-        workdir,
+        os.path.abspath(workdir),
         checkpointers={
             "generator": orbax.checkpoint.PyTreeCheckpointer(),
             "discriminator": orbax.checkpoint.PyTreeCheckpointer(),
         },
-        options=orbax.checkpoint.CheckpointManagerOptions(create=True, max_to_keep=2),
+        options=orbax.checkpoint.CheckpointManagerOptions(create=True, max_to_keep=5, 
+                                                    keep_period=25000,
+                                                    save_on_steps=set([5000] + list(range(25000, config.num_grad_updates, 25000)))      
+    )
     )
 
     def metrics_callback(infos: dict[str, jax.Array]) -> None:
@@ -184,16 +190,21 @@ def main(_) -> None:
             step,
             plotting.plot_samples(state.generator, jax.random.PRNGKey(0), config=config),
         )
-        # TODO: comment out for one-step model
-        histograms, statistics = metrics.compute_distribution_metrics(
-            state.generator, jax.random.PRNGKey(0), config=config
-        )
-        metric_writer.write_scalars(step, statistics)
-        metric_writer.write_histograms(step, histograms)
-        metric_writer.write_images(
-            step,
-            plotting.plot_cdf(state.generator, jax.random.PRNGKey(0), config=config),
-        )
+        # TODO: comment out for ratin-a-box - cant compute saved model
+        # metrics.compute_distribution_metrics(
+        #     state.generator, jax.random.PRNGKey(0), config=config
+        # )  
+
+        # TODO: comment out for one-step model - make mc_returns to compute stats
+        # histograms, statistics = metrics.compute_distribution_metrics(
+        #     state.generator, jax.random.PRNGKey(0), config=config
+        # )
+        # metric_writer.write_scalars(step, statistics)
+        # metric_writer.write_histograms(step, histograms)
+        # metric_writer.write_images(
+        #     step,
+        #     plotting.plot_cdf(state.generator, jax.random.PRNGKey(0), config=config),
+        # )
 
     def checkpoint_callback(state: State) -> None:
         step = state.step.item()

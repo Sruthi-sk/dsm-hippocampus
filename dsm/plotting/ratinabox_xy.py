@@ -11,19 +11,18 @@ from dsm.configs import Config
 from dsm.plotting import utils as plotting_utils
 from dsm.state import FittedValueTrainState
 
-ENVIRONMENT = "Pendulum-v1"
-
+ENVIRONMENT = "Ratinabox-v0-xy"
 
 def source_states() -> tuple[list[Any], list[npt.NDArray]]:
-    thetas = [np.pi / 2, np.pi, np.pi * 3 / 2]
-    thetadots = [-4, 0, 4]
+    xposes = [0.1, 0.3, 0.5, 0.7, 0.9]
+    yposes = [0.05, 0.2, 0.4, 0.5, 0.6, 0.8, 0.95]
 
     states = []
     observations = []
-    for theta in thetas:
-        for thetadot in thetadots:
+    for theta in xposes:
+        for thetadot in yposes:
             states.append(np.array([theta, thetadot]))
-            observations.append(np.array([np.cos(theta), np.sin(theta), thetadot]))
+            observations.append(np.array([theta, thetadot]))
 
     return states, observations
 
@@ -34,7 +33,6 @@ def plot_samples(
     rng: jax.random.KeyArray,
     *,
     config: Config,
-    env_source = None,
 ) -> npt.NDArray:
     dataset = datasets.make_dataset(ENVIRONMENT)
 
@@ -50,28 +48,26 @@ def plot_samples(
     )
 
     # Left scatter plot
-    # # converts Cartesian coordinates to polar coordinates (thetas) and extracts velocities
-    thetas = np.arctan2(dataset.observation[:, 1], dataset.observation[:, 0]) % (2 * np.pi)
-    velocities = dataset.observation[:, -1]
-    axs[0].scatter(thetas, velocities, alpha=0.1, s=1.0, color="grey")
+    xs = dataset.observation[:, 0]
+    ys = dataset.observation[:, -1]
+    axs[0].scatter(xs, ys, alpha=0.1, s=1.0, color="grey")
 
     # Plot atom scatter & kde
     cmap = plt.get_cmap("Dark2")  # pyright: ignore
     for i in range(samples.shape[0]):
-        thetas = np.arctan2(samples[i, :, 1], samples[i, :, 0]) % (2 * np.pi)
-        velocities = samples[i, :, -1]
-        axs[1].scatter(thetas, velocities, color=cmap(i), s=2.0, alpha=0.25)
+        xs = samples[i, :, 0]
+        ys = samples[i, :, -1]
+        axs[1].scatter(xs, ys, color=cmap(i), s=2.0, alpha=0.25)
 
     # Plot source state
-    theta = np.arctan2(source[1], source[0]) % (2 * np.pi)
     for ax in axs:
-        ax.scatter(theta, source[-1], marker="x", s=64, alpha=0.8, color="red")
+        ax.scatter(source[0], source[-1], marker="x", s=64, alpha=0.8, color="red")
 
     # set bounds
     for ax in axs:
         # ax.set_ylim(-8.5, 8.5)
         ax.set_aspect("auto")
-        ax.set_xticks([0, np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi], ["0", "π/2", "π", "3π/2", "2π"])
+        # ax.set_xticks([0, np.pi / 2, np.pi, 3 * np.pi / 2, 2 * np.pi], ["0", "π/2", "π", "3π/2", "2π"])
 
     image = plotting_utils.fig_to_ndarray(fig)
     plt.close(fig)

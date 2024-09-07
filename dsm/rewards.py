@@ -88,6 +88,9 @@ _CUSTOM_REWARDS: dict[str, dict[str, Callable[..., jax.Array] | Callable[[], Cal
         "Angular Velocity Penalty": pendulum_angular_velocity_penalty,
         "Counter Clockwise Penalty": pendulum_counterclockwise_av,
     },
+    "MountainCarContinuous-v0": {
+        "Default": lambda s, a: - 0.001 * a**2,
+    },
     "WindyGridWorld-v0": {
         "Quadrants": windy_gridworld_quadrants,
     },
@@ -97,6 +100,9 @@ _CUSTOM_REWARDS: dict[str, dict[str, Callable[..., jax.Array] | Callable[[], Cal
     "WindyGridWorld-bottom-v0": {
         "Quadrants": windy_gridworld_quadrants,
     },
+    # "Ratinabox-v0": {
+    #     "Default": lambda s, a: - 0.001 * a**2,   #TODO: change this
+    # },
 }
 
 
