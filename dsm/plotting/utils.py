@@ -44,6 +44,11 @@ def return_distribution(
     num_samples: int,
     config: Config,
 ) -> jax.Array:
+    # used to compute the expected reward 
+    # samples are generated from the source state using the DSM model.
+    # It uses a provided policy to generate actions over the samples in parallel and a reward function to compute the reward for each state-action pair. 
+    # The expected reward is then computed as the mean reward over all samples, discounted by a factor gamma
+
     sample_rng, action_rng = jax.random.split(rng)
     samples = sample_from_sr(
         state,
@@ -55,12 +60,13 @@ def return_distribution(
     )
     keys = jax.random.split(action_rng, np.prod(samples.shape[:-1]))
     keys = jnp.array(keys).reshape(*samples.shape[:-1], -1)
-    
     # actions = jax.vmap(jax.vmap(policy))(keys, samples)
     def apply_policy_to_batch(batch):
         keys,samples = batch
         return jax.lax.map(lambda x: policy(x[0],x[1]),(keys,samples))
     actions = jax.lax.map(apply_policy_to_batch, (keys,samples))
+    # jax.debug.print("DEBUG actions shape in return_distribution {bar} and first one is {foo}", bar=len(actions), foo = actions[1].shape) 
+    # Pendulum: action is tuple of shape 2, and actions[1].shape = (31,1024,1,1)
 
     rewards = jax.vmap(jax.vmap(reward_fn))(samples, actions[1]).squeeze()
     assert isinstance(config.gamma, float)

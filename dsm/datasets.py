@@ -82,7 +82,7 @@ def load_policy(policy_path: pathlib.Path) -> Policy:
         rng, key = jax.random.split(rng)
         # action, _ = pure_policy_func(policy_params, observation, key)
         action, _ = pure_policy_func(policy_params, jnp.squeeze(observation), key)
-        print('DEBUG action ',action)
+        # jax.debug.print("DEBUG action in load_policy {bar}", bar=action)
         return rng, action
 
     return policy_fn
