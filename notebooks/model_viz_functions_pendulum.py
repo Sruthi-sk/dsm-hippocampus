@@ -13,9 +13,6 @@ import matplotlib.pyplot as plt
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
 
-
-
-
 #######################################
 # plot generated samples directly (for pendulum env)
 from dsm import datasets
@@ -224,13 +221,15 @@ def plot_neuron_activations(activations_layer, neuron_idx, figlabel, xpos,ypos, 
                 activations_2d = activations_selected.reshape(len(ypos), len(xpos))
                 contour_set = ax.contourf(xpos, ypos, activations_2d, cmap=cmap_ratemap, levels=20)
                 ax.set_aspect('equal')
-                cbar = plt.colorbar(contour_set, ax=ax)
+                if Tot<11:
+                    cbar = plt.colorbar(contour_set, ax=ax)
             # scatter = ax.scatter(angles_flat, Z_flat, c=activations_selected)
 
             # ax = fig.add_subplot(Rows,Cols,Position[k], projection='3d')
             # scatter = ax.scatter(X_flat, Y_flat, Z_flat, c=activations_selected)
-            # # plt.yticks([]) 
-            # # plt.xticks([]) 
+            if Tot>10:
+                ax.set_yticks([])
+                ax.set_xticks([])
             ax.xaxis.set_major_locator(ticker.NullLocator())
             ax.yaxis.set_major_locator(ticker.NullLocator())
             ax.set_xlabel('Angle')
