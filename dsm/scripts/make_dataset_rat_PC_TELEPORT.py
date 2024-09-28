@@ -1,5 +1,5 @@
 """
-python -m dsm.scripts.make_dataset_rat_PC_TELEPORT --dataset_path datasets/ratinaboxPCteleport/simple/dataset.pkl 
+python -m dsm.scripts.make_dataset_rat_PC_TELEPORT --dataset_path datasets/ratinaboxPC/teleport/dataset.pkl 
 - add to datasets.py
 _DATASET_REGISTRY: 
     "Ratinabox-v0-pc-teleport": pathlib.Path("datasets/ratinaboxPCteleport/simple/dataset.pkl"),
@@ -8,11 +8,11 @@ _DATASET_REGISTRY:
 python -m dsm --workdir logdir-rat_50pc_teleport --fdl_config=base
 """
 
-import numpy as np
 from ratinabox.Environment import Environment
-import numpy as np
 from ratinabox.Agent import Agent
 from ratinabox.Neurons import PlaceCells
+
+import numpy as np
 import pandas as pd
 
 import os
@@ -25,8 +25,8 @@ from typing import Annotated
 
 
 NUM_PLACE_CELLS = 50
-NUM_SECS = 10*60
-# folder_dataset_path = 'datasets/ratinaboxPCrandom/simple/'
+NUM_SECS = 20*60
+# folder_dataset_path = 'datasets/ratinaboxPC/randomwalk/'
 # dataset_path = pathlib.Path(folder_dataset_path+"dataset.pkl")
 
 
@@ -106,6 +106,8 @@ def main(
     joblib.dump(placecells.params, folder_dataset_path+'/placecells_params.pkl')
     placecells.plot_rate_map(autosave=True,method="history")
     Ag.plot_trajectory(color="changing", autosave=True)
+    
+    joblib.dump(Ag.get_history_arrays()['pos'],folder_dataset_path+'/agent_positions.pkl')
 
 
 if __name__ == "__main__":

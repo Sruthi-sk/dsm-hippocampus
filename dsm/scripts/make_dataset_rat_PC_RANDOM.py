@@ -1,8 +1,8 @@
 """
-python -m dsm.scripts.make_dataset_rat_PC_RANDOM --dataset_path datasets/ratinaboxPCrandom/simple/dataset.pkl 
+python -m dsm.scripts.make_dataset_rat_PC_RANDOM --dataset_path datasets/ratinaboxPC/randomwalk/dataset.pkl 
 - add to datasets.py
 _DATASET_REGISTRY: 
-    "Ratinabox-v0-pc-random": pathlib.Path("datasets/ratinaboxPCrandom/simple/dataset.pkl"),
+    "Ratinabox-v0-pc-random": pathlib.Path("datasets/ratinaboxPC/randomwalk/dataset.pkl"),
 - add to - dsm/plotting/_init_.py - _PLOT_BY_ENVIRONMENT 
 - change env in configs.py
 python -m dsm --workdir logdir-rat_50pc_random --fdl_config=base
@@ -11,6 +11,7 @@ python -m dsm --workdir logdir-rat_50pc_random --fdl_config=base
 from ratinabox.Environment import Environment
 from ratinabox.Agent import Agent
 from ratinabox.Neurons import PlaceCells
+
 import numpy as np
 import pandas as pd
 
@@ -24,8 +25,8 @@ from typing import Annotated
 
 
 NUM_PLACE_CELLS = 50
-NUM_SECS = 10*60
-# folder_dataset_path = 'datasets/ratinaboxPCrandom/simple/'
+NUM_SECS = 20*60
+# folder_dataset_path = 'datasets/ratinaboxPC/randomwalk/'
 # dataset_path = pathlib.Path(folder_dataset_path+"dataset.pkl")
 
 
@@ -63,7 +64,7 @@ def main(
 
     Env = Environment()
     # Env.add_wall(np.array([[0.4, 0], [0.4, 0.4]]))
-    Ag = Agent(Env)
+    Ag = Agent(Env,params={'thigmotaxis':0.2})
     # Env.add_agents(Ag)  ### ???? #TODO: check if this is needed
 
     placecells = PlaceCells(Ag, params={'n':NUM_PLACE_CELLS,}) 
@@ -81,6 +82,7 @@ def main(
     step_type = np.ones((length, 1))
     # Set the first element to 0
     step_type[0, 0] = 0
+    step_type[-1, 0] = 2
     observation = placecells.get_history_arrays()["firingrate"]
 
     import dm_env
@@ -99,6 +101,8 @@ def main(
     joblib.dump(placecells.params, folder_dataset_path+'/placecells_params.pkl')
     placecells.plot_rate_map(autosave=True,method="history")
     Ag.plot_trajectory(color="changing", autosave=True)
+    
+    joblib.dump(Ag.get_history_arrays()['pos'],folder_dataset_path+'/agent_positions.pkl')
 
 
 if __name__ == "__main__":

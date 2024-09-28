@@ -1,16 +1,17 @@
 """
-python -m dsm.scripts.make_dataset_rat_PC_RANDOM --dataset_path datasets/ratinaboxPCrandom/simple/dataset.pkl 
+python -m dsm.scripts.make_dataset_rat_PC_walls --dataset_path datasets/ratinaboxPC/randomwalk/dataset.pkl 
 - add to datasets.py
 _DATASET_REGISTRY: 
-    "Ratinabox-v0-pc-random": pathlib.Path("datasets/ratinaboxPCrandom/simple/dataset.pkl"),
+    "Ratinabox-v0-pc-random-walls": pathlib.Path("datasets/ratinaboxPC/walls/dataset.pkl"),
 - add to - dsm/plotting/_init_.py - _PLOT_BY_ENVIRONMENT 
 - change env in configs.py
-python -m dsm --workdir logdir-rat_50pc_random --fdl_config=base
+python -m dsm --workdir logdir-rat_50pc_walls --fdl_config=base
 """
 
 from ratinabox.Environment import Environment
 from ratinabox.Agent import Agent
 from ratinabox.Neurons import PlaceCells
+
 import numpy as np
 import pandas as pd
 
@@ -24,8 +25,8 @@ from typing import Annotated
 
 
 NUM_PLACE_CELLS = 50
-NUM_SECS = 10*60
-# folder_dataset_path = 'datasets/ratinaboxPCrandom/simple/'
+NUM_SECS = 20*60
+# folder_dataset_path = 'datasets/ratinaboxPC/randomwalk/'
 # dataset_path = pathlib.Path(folder_dataset_path+"dataset.pkl")
 
 
@@ -62,9 +63,10 @@ def main(
 
 
     Env = Environment()
-    Env.add_wall(np.array([[0.4, 0], [0.4, 0.95]]))  #[[0.4, 0], [0.4, 0.8]]
+    Env.add_wall(np.array([[0.4, 0], [0.4, 0.90]]))  #[[0.4, 0], [0.4, 0.8]]
     # Ag = Agent(Env, params={"dt": 50e-3})
-    Ag = Agent(Env)
+    # Ag = Agent(Env)
+    Ag = Agent(Env,params={'thigmotaxis':0.2})
     # Env.add_agents(Ag)  ### ???? #TODO: check if this is needed
 
     placecells = PlaceCells(Ag, params={'n':NUM_PLACE_CELLS,}) 

@@ -1,0 +1,37 @@
+
+
+GPU
+===
+nvidia-smi
+ps aux | grep <process number>
+kill -9 pid
+
+import psutil
+memory_info = psutil.virtual_memory()
+print(f"Available memory: {memory_info.available / 1024 / 1024 / 1024} GB")
+import sys
+print(f"Model size: {sys.getsizeof(trained_modelstate)} bytes")
+
+import torch
+torch.cuda.set_per_process_memory_fraction(0.6, 0)
+#torch.cuda.list_gpu_processes(0)
+# torch.cuda.memory_allocated(0) / 1024 / 1024 / 1024
+# total_memory = torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1024
+# total_memory
+total_memory = torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1024
+total_memory*0.6
+torch.cuda.list_gpu_processes(0)
+torch.cuda.empty_cache()
+
+wsl
+===
+
+https://documentation.ubuntu.com/wsl/en/latest/guides/install-ubuntu-wsl2/
+https://documentation.ubuntu.com/wsl/en/latest/tutorials/gpu-cuda/ - FOLLOW THIS
+https://docs.nvidia.com/cuda/wsl-user-guide/index.html
+https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=WSL-Ubuntu&target_version=2.0&target_type=deb_local
+
+https://ubuntu.com/blog/upgrade-data-science-workflows-ubuntu-wsl
+https://discourse.ubuntu.com/t/install-ubuntu-on-wsl2-and-get-started-with-graphical-applications/26296
+
+https://code.visualstudio.com/docs/remote/wsl 

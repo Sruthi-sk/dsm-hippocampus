@@ -13,7 +13,7 @@ class MLP(nn.Module):
     num_hidden_units: int
     num_outputs: int | None = None
     module: Type[nn.Module] = nn.Dense
-    activation: Callable[[jax.Array], jax.Array] = nn.leaky_relu
+    activation: Callable[[jax.Array], jax.Array] = nn.leaky_relu #nn.relu
     dtype: Annotated[Any, DType] = jnp.float32
     param_dtype: Annotated[Any, DType] = jnp.float32
 

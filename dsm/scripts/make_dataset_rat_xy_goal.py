@@ -1,5 +1,9 @@
 """
 Dataset with states as just x nd y positions of the agent ( from TaskEnv in RatInABox-v0)
+
+python -m dsm.scripts.make_dataset_rat --env Ratinabox-v0 --dataset_path 
+datasets/ratinaboxtest/sac/dataset.pkl --policy_path datasets/ratinaboxtest/sac/policy --force
+
 """
 
 import functools

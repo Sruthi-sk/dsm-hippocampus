@@ -1,20 +1,18 @@
 """
-python -m dsm.scripts.make_dataset_rat_PC_random_highTH --dataset_path datasets/ratinaboxPCrandom/high_th/dataset.pkl
+python -m dsm.scripts.make_dataset_rat_PC_highTH --dataset_path datasets/ratinaboxPC/high_th/dataset.pkl
 - add to datasets.py
 _DATASET_REGISTRY: 
-    "Ratinabox-v0-pc-highTH": pathlib.Path("datasets/ratinaboxPCrandom/high_th/dataset.pkl"),
+    "Ratinabox-v0-pc-highTH": pathlib.Path("datasets/ratinaboxPC/high_th/dataset.pkl"),
 - add to - dsm/plotting/_init_.py - _PLOT_BY_ENVIRONMENT 
 - change env in configs.py
 python -m dsm --workdir logdir-rat_50pc_highTH --fdl_config=base
 """
 
-
-
-import numpy as np
 from ratinabox.Environment import Environment
-import numpy as np
 from ratinabox.Agent import Agent
 from ratinabox.Neurons import PlaceCells
+
+import numpy as np
 import pandas as pd
 
 import os
@@ -27,8 +25,8 @@ from typing import Annotated
 
 
 NUM_PLACE_CELLS = 50
-NUM_SECS = 10*60
-# folder_dataset_path = 'datasets/ratinaboxPCrandom/simple/'
+NUM_SECS = 20*60
+# folder_dataset_path = 'datasets/ratinaboxPC/randomwalk/'
 # dataset_path = pathlib.Path(folder_dataset_path+"dataset.pkl")
 
 
@@ -83,7 +81,7 @@ def main(
     step_type = np.ones((length, 1))
     # Set the first element to 0
     step_type[0, 0] = 0
-
+    step_type[-1, 0] = 2
     observation = placecells.get_history_arrays()["firingrate"]
 
     import dm_env
@@ -102,6 +100,8 @@ def main(
     joblib.dump(placecells.params, folder_dataset_path+'/placecells_params.pkl')
     placecells.plot_rate_map(autosave=True,method="history")
     Ag.plot_trajectory(color="changing", autosave=True)
+    
+    joblib.dump(Ag.get_history_arrays()['pos'],folder_dataset_path+'/agent_positions.pkl')
 
 
 if __name__ == "__main__":

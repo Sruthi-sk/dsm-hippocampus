@@ -1,20 +1,19 @@
 """
-python -m dsm.scripts.make_dataset_rat_PC_random_lowTH --dataset_path datasets/ratinaboxPCrandom/low_th/dataset.pkl
+python -m dsm.scripts.make_dataset_rat_PC_random_lowTH --dataset_path datasets/ratinaboxPC/low_th/dataset.pkl
 - add to datasets.py
 _DATASET_REGISTRY: 
-    "Ratinabox-v0-pc-lowTH": pathlib.Path("datasets/ratinaboxPCrandom/low_th/dataset.pkl"),
+    "Ratinabox-v0-pc-lowTH": pathlib.Path("datasets/ratinaboxPC/low_th/dataset.pkl"),
 - add to - dsm/plotting/_init_.py - _PLOT_BY_ENVIRONMENT 
 - change env in configs.py
 python -m dsm --workdir logdir-rat_50pc_lowTH --fdl_config=base
 """
 
-
-
-import numpy as np
 from ratinabox.Environment import Environment
-import numpy as np
+
 from ratinabox.Agent import Agent
 from ratinabox.Neurons import PlaceCells
+
+import numpy as np
 import pandas as pd
 
 import os
@@ -27,8 +26,8 @@ from typing import Annotated
 
 
 NUM_PLACE_CELLS = 50
-NUM_SECS = 10*60
-# folder_dataset_path = 'datasets/ratinaboxPCrandom/simple/'
+NUM_SECS = 20*60
+# folder_dataset_path = 'datasets/ratinaboxPC/randomwalk/'
 # dataset_path = pathlib.Path(folder_dataset_path+"dataset.pkl")
 
 
@@ -102,6 +101,8 @@ def main(
     joblib.dump(placecells.params, folder_dataset_path+'/placecells_params.pkl')
     placecells.plot_rate_map(autosave=True,method="history")
     Ag.plot_trajectory(color="changing", autosave=True)
+    
+    joblib.dump(Ag.get_history_arrays()['pos'],folder_dataset_path+'/agent_positions.pkl')
 
 
 if __name__ == "__main__":

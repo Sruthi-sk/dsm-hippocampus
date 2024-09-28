@@ -92,8 +92,13 @@ def base() -> Config:
 
     return Config(
         seed=0,
-        env="Pendulum-v1",
-        generator=MLP(num_layers=3, num_hidden_units=256, dtype=dtype, param_dtype=dtype),
+        # env="Pendulum-v1",
+        env="Ratinabox-v0-pc-random",
+        # env = "Ratinabox-v0-pc-walls",
+        # env="Ratinabox-v0-pc-highTH",
+        # env="Ratinabox-v0-pc-teleport",
+        # env="Ratinabox-v0-pc-goal",
+        generator=MLP(num_layers=3, num_hidden_units=32, dtype=dtype, param_dtype=dtype),
         generator_optim=optax.adam(
             learning_rate=auto_config.with_tags(6.25e-5, (tags.Generator, tags.LearningRate)),
             eps=1.5e-4,
@@ -102,7 +107,7 @@ def base() -> Config:
         # iResMLP, i.e., spectral norm on a residual MLP for injectivity of the discriminator
         discriminator=nn.SpectralNorm(
             ResidualMLP(
-                num_hidden_units=256,
+                num_hidden_units=32, #256
                 num_layers_per_block=2,
                 num_blocks=2,
                 num_outputs=8,
@@ -122,22 +127,30 @@ def base() -> Config:
         inner_kernel=kernels.RationalQuadraticKernel(bandwidths=(0.2, 0.5, 1.0, 2.0, 5.0)),
         inner_kernel_adaptive_bandwidth=False,
         inner_distance_fn=kernels.euclidean_distance,
-        inner_separate_discriminator=False,
+        inner_separate_discriminator=False,  #CHANGE for SR
         inner_linear_kernel=False,
         gamma=0.95,
-        horizon=6,
+        horizon=6, # Optimize?
         bootstrap=True,
-        latent_dims=8,
-        num_outer=51,
-        num_inner=32,
-        num_grad_updates=2_500_000,
-        batch_size=64,
+        # latent_dims=8,
+        latent_dims=5, # Optimize?
+        # num_outer=51,
+        num_outer=10, #CHANGE for SR to 1
+        # num_inner=32,
+        num_inner=5, # Optimize?
+        # num_grad_updates=2_500_000,
+        num_grad_updates=500_000,
+        # num_grad_updates=5_000,
+        batch_size=32, #64
         target_params_update=SoftTargetParamsUpdate(step_size=0.01),
-        log_every=1_000,
-        plot_every=100_000,
-        plot_num_samples=1024,
+        # log_every=1_000,
+        log_every=25_000,
+        # plot_every=100_000,
+        # plot_every=1000,
+        plot_every=25000,
+        plot_num_samples=64,
         cumulant_is_source_state=True,
-        distributional=True,
+        distributional=True, #CHANGE for SR
     )
 
 
@@ -215,7 +228,7 @@ def mlp_discriminator(config: fdl.Config[Config]) -> None:
     config.discriminator = fdl.Config(
         MLP,
         num_layers=3,
-        num_hidden_units=256,
+        num_hidden_units=32, #256
         num_outputs=8,
         dtype=config.dtype,
         param_dtype=config.dtype,

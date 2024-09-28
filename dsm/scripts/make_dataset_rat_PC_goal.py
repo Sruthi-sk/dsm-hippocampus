@@ -2,7 +2,7 @@
 Dataset with states as place cells of the agent 
 (from TaskEnv in RatInABox-v0) - 1 goal now in centre,
 
-python -m dsm.scripts.make_dataset_rat_PC_goal --dataset_path datasets/ratinaboxPCgoal/sac/dataset.pkl --policy_path datasets/ratinaboxPCgoal/sac/policy --force 
+python -m dsm.scripts.make_dataset_rat_PC_goal --dataset_path datasets/ratinaboxPC/goal/sac/dataset.pkl --policy_path datasets/ratinaboxPC/goal/sac/policy --force 
 - add to datasets.py
 _DATASET_REGISTRY: 
     "Ratinabox-v0-pc-goal": pathlib.Path("datasets/ratinaboxPCgoal/sac/dataset.pkl"),
@@ -16,7 +16,6 @@ from ratinabox.contribs.TaskEnvironmentGym import (SpatialGoal, Reward)
 from ratinabox.Agent import Agent
 from ratinabox.Neurons import PlaceCells
 import dsm.scripts.actor_critic_rat as rat_algos
-
 import os
 import tyro
 import functools
@@ -25,8 +24,9 @@ import pathlib
 import pickle
 from typing import Annotated
 
-TRAIN_STEPS = 4000
-NUM_EVAL_STEPS = 5000
+TRAIN_STEPS = 5000
+# NUM_EVAL_STEPS = 100
+EVAL_TIME = 20*60 # num seconds
 NUM_PLACE_CELLS = 50
 
 import gymnasium as gym
@@ -57,7 +57,7 @@ def main(
     train_steps: int = TRAIN_STEPS,
     # train_steps: int = 10,
     policy_path: pathlib.Path,
-    num_eval_steps: int = NUM_EVAL_STEPS,
+    # num_eval_steps: int = NUM_EVAL_STEPS,
     # num_eval_steps: int = 10_0,
     sticky_action_prob: float = 0.0,
     force: bool = False,
@@ -75,7 +75,7 @@ def main(
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     logger.addHandler(handler)
-    logger.debug(f'TRAIN_STEPS; {TRAIN_STEPS}, NUM_EVAL_STEPS: {NUM_EVAL_STEPS}')
+    logger.debug(f'TRAIN_STEPS; {TRAIN_STEPS}') #, NUM_EVAL_STEPS: {NUM_EVAL_STEPS}')
 
     logger.debug(env_id)
     env = envs.make(env_id)
@@ -143,8 +143,8 @@ def main(
     # if success_frac < 0.9:
     #     print("Training did not converge. Exiting.")
     #     return
-
-    logger.debug(f'success frac: {success_frac}')
+    end_ep_time = np.mean(env.episodes['duration'][-10:])
+    logger.debug(f'success frac: {success_frac} mean episode time {end_ep_time}')
     # print('debug env.observation_space.shape    ', env.observation_spaces[f'{env.agent_names[0]}']) # placecells.n
 
     # # setting policy to evaluate
@@ -198,6 +198,7 @@ def main(
     # timestep_t.observation =timestep_t.observation['agent_0']
 
     episode_index, episode_return = 0, 0.0
+    num_eval_steps = int(EVAL_TIME/end_ep_time)+1
     # print('debug timestep_t.observation', timestep_t, actor.firingrate_torch.detach().numpy())
     for step in tqdm.tqdm(range(num_eval_steps)):
         # rng_key, proposed_action = policy_func(rng_key, timestep_t.observation)
@@ -249,11 +250,14 @@ def main(
     # print('placecells.get_state()',placecells.get_state()) 
 
     import ratinabox
+    import joblib
+
     ratinabox.figure_directory = folder_dataset_path+'/figures'
     joblib.dump(placecells.params, folder_dataset_path+'/placecells_params.pkl')
     print('DEBUG cellfiringrates',placecells.get_history_arrays())
     placecells.plot_rate_map(autosave=True,method="history")
     ag.plot_trajectory(color="changing", autosave=True)
+    joblib.dump(ag.get_history_arrays()['pos'],folder_dataset_path+'/agent_positions.pkl')
 
 if __name__ == "__main__":
     tyro.cli(main)

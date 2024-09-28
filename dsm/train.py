@@ -1,3 +1,5 @@
+# When using - change the env in config.py to the one you want to conduct experiments/ train on - observation_spec has to change for RiAB
+
 import enum
 import functools
 import logging
@@ -272,6 +274,7 @@ def train_step(
             )(lhs, rhs)
         else:
             # Non-distributional loss, i.e., ensemble of gamma models
+            # print('debug Non-distributional loss, i.e., ensemble of gamma models')
             loss = jax.vmap(
                 jax.vmap(
                     functools.partial(
@@ -473,6 +476,13 @@ def make_state(
     observation_spec: specs.DiscreteArray,
     config: Config,
 ) -> State:
+    # if ENVIRONMENT.startswith("Ratinabox-v0-pc"):
+    #     observation_spec_shape = NUM_STATE_DIM_CELLS
+    # else:
+    #     observation_spec_shape = math.prod(observation_spec.shape),
+    # observation_spec = NUM_STATE_DIM_CELLS # math.prod(observation_spec.shape)    
+    # CHANGED BECAUSE observation space was only th exy positions for actor critic but in dataset we put 50 place cells as observation
+
     g_rng, d_rng = jax.random.split(rng)
     return State(
         step=jnp.int32(0),
@@ -499,7 +509,7 @@ def load_state_and_config(
             "generator": jax.eval_shape(
                 functools.partial(_make_generator_state, config=config),
                 jax.random.PRNGKey(0),
-                env.observation_spec(), , # NUM_STATE_DIM_CELLS # 
+                env.observation_spec(), # NUM_STATE_DIM_CELLS # 
             ),
         },
     )

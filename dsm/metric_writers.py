@@ -38,6 +38,9 @@ class AimWriter(metric_writers.MetricWriter):
         self.run.report_progress()
 
     def write_images(self, step: int, images: Mapping[str, Array]):
+        # when keys are too large, enumerate the sources
+        # for i, (key, value) in enumerate(images.items()):
+        #     self.run.track(aim.Image(value), name=f"image_{i}", step=step)
         for key, value in images.items():
             self.run.track(aim.Image(value), name=key, step=step)
         self.run.report_progress()
