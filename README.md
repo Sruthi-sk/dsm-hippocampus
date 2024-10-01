@@ -22,10 +22,6 @@ This repository contains the implementation of the model and experiments present
 This project makes heavy use of [Jax](https://github.com/google/jax), [Flax](https://github.com/google/flax), [Optax](https://github.com/google-deepmind/optax), and [Fiddle](https://github.com/google/fiddle). We use [pdm](https://pdm-project.org/latest/) to manage our dependencies. With the lockfile `pdm.lock` you should be able to faithfully instantiate the same environment we used to train our $\delta$-models. To do so, you can run the following commands,
 
 
-Here is the cleaned and revised version of your content:
-
-markdown
-Copy code
 ## Setup
 
 This project uses [JAX](https://github.com/google/jax), [Flax](https://github.com/google/flax), [Optax](https://github.com/google-deepmind/optax), and [Fiddle](https://github.com/google/fiddle). Dependency management is handled with [PDM](https://pdm-project.org/latest/). You can recreate the same environment we used to train our $\delta$-models by following these steps:
@@ -91,7 +87,7 @@ python -m dsm.scripts.make_dataset_rat_PC_walls --dataset_path datasets/ratinabo
 
 ## Training a $\delta$-Model
 
-To train the $\delta$-model: \
+To train the $\delta$-model: 
 - configure wandb
 - change configs.py
 - ensure dataset path in datasets.py
@@ -138,10 +134,9 @@ You can switch how the experiment is logged either using Weights & Biases or Aim
 
 ## Thesis
 
-Main figures in notebooks/
+Main figures in notebooks
 
-env="Ratinabox-v0-pc-teleport", or env="Ratinabox-v0-pc-random",
-If new environment:
+If new environment: 
 - make changes to dsm/types.py, dsm/envs.py
 - add codefile to /distributional-sr/dsm/plotting- (functions for source state and plotting) for the module (eg - ratinabox.py) 
 - add env in _PLOT_BY_ENVIRONMENT in /distributional-sr/dsm/plotting/__init__.py
@@ -158,7 +153,7 @@ If changing number of place cells
 
 - **Hyperparameter Tuning** Investigate the optimal hyperparameters of the DSM concerning the RatInABox environment
 - **Improve Representation Disentanglement:** Implement constraints like positive activations or energy regularization to enhance efficiency and interpretability.
-- **Incorporate Features for BIological Plausibility :** Adding recurrent connections could improve its .
+- **Incorporate Features for Biological Plausibility :** Adding recurrent connections could improve its .
 - **Explore Behavioral Feature Representation:** Investigate whether DSM's latent variables capture distinct behavioral features like boundary adherence or goal-directed movement.
 - **Test in Animal Models:** Validate DSM predictions in new experiments with rodent experiments in virtual reality, manipulating environmental cues.
 
@@ -171,6 +166,7 @@ Gamma models
 - https://gammamodels.github.io/ 
 -  https://github.com/jannerm/gamma-models/blob/main/scripts/gamma-pendulum.ipynb
 
-RatInABox environment - Tom M George, Mehul Rastogi, William de Cothi, Claudia Clopath, Kimberly Stachenfeld, Caswell Barry. "RatInABox, a toolkit for modelling locomotion and neuronal activity in continuous environments" (2024), eLife, https://doi.org/10.7554/eLife.85274 .
+RatInABox environment: <br>
+ Tom M George, Mehul Rastogi, William de Cothi, Claudia Clopath, Kimberly Stachenfeld, Caswell Barry. "RatInABox, a toolkit for modelling locomotion and neuronal activity in continuous environments" (2024), eLife, https://doi.org/10.7554/eLife.85274 .
 
 
