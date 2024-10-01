@@ -1,164 +1,176 @@
-# Distributional Successor Measure - Interpreting as a Hippocampal model
+# Interpreting the Distributional Successor Measure as a model for the Hippocampus
 
-This repository contains the reference implementation of the Distributional Successor Measure presented in:
+## Abstract
 
-**[A Distributional Analogue to the Successor Representation](https://arxiv.org/abs/2402.08530)**
 
-by [Harley Wiltzer](https://harwiltz.github.io/)* & [Jesse Farebrother](https://brosa.ca)*, [Arthur Gretton](https://www.gatsby.ucl.ac.uk/~gretton/), [Yunhao Tang](https://robintyh1.github.io/), [André Baretto](https://sites.google.com/view/andrebarreto/about), [Will Dabney](https://willdabney.com/), [Marc G. Bellemare](http://www.marcgbellemare.info/), and [Mark Rowland](https://sites.google.com/view/markrowland).
+Understanding how the brain represents and processes spatial information is fundamental to unraveling the mechanisms of navigation and memory. Hippocampal place cells play a central role in encoding spatial environments, forming cognitive maps that support flexible navigation. Traditional computational models, such as the Successor Representation (SR), have provided insights into how the hippocampus might encode expected future states based on current positions. However, these models are limited in capturing the dynamic and distributional nature of place cell activity, particularly their ability to adapt to environmental changes and encode distributions over possible future states.
 
-https://github.com/JesseFarebro/distributional-sr/assets/1377567/eea0a53a-65d7-4201-a234-6609d1166d11
+This thesis explores the Distributional Successor Measure (DSM), an extension of the SR framework that models the full distribution of possible future states, aligning more closely with biological observations of hippocampal function. We employ neuroscientific analysis techniques to examine the internal representations of the DSM in controlled environments, such as the inverted pendulum task, to gain insights into its mechanisms. Additionally, we simulate rodent foraging behavior to assess whether the DSM can effectively model place cell dynamics and remapping behaviors observed in hippocampal neurons.
 
-The Distributional Successor Measure (DSM) a new approach for distributional reinforcement learning which proposes a clean separation of transition structure and reward in the learning process. Analogous to how the successor representation (SR) describes the expected consequences of behaving according to a given policy, our distributional successor measure describes the distributional consequences of this behaviour. This repository contains the code for learning a $\delta$-model, our proposed representation that learns the distributional SM.
+Our experiments compare the DSM with the traditional SR model, evaluating their ability to generalize across environments and capture the flexible, predictive nature of place cells. Results demonstrate that the DSM provides richer and more adaptable predictive representations, exhibiting greater resilience to environmental changes. The DSM's distributed predictive framework captures the variability and complexity of future states, mirroring the heterogeneous and dynamic nature of hippocampal representations.
+
+These findings suggest that the DSM offers a more accurate and robust computational model for how the hippocampus encodes predictive maps in a distributional manner. By leveraging the DSM, we provide new insights into the neural mechanisms underlying spatial cognition and contribute to bridging the gap between computational models and biological neural systems.
+
+
+
+This repository contains the implementation of the model and experiments presented in the thesis.
+
+
 
 ## Setup
 
 This project makes heavy use of [Jax](https://github.com/google/jax), [Flax](https://github.com/google/flax), [Optax](https://github.com/google-deepmind/optax), and [Fiddle](https://github.com/google/fiddle). We use [pdm](https://pdm-project.org/latest/) to manage our dependencies. With the lockfile `pdm.lock` you should be able to faithfully instantiate the same environment we used to train our $\delta$-models. To do so, you can run the following commands,
+
+
+Here is the cleaned and revised version of your content:
+
+markdown
+Copy code
+## Setup
+
+This project uses [JAX](https://github.com/google/jax), [Flax](https://github.com/google/flax), [Optax](https://github.com/google-deepmind/optax), and [Fiddle](https://github.com/google/fiddle). Dependency management is handled with [PDM](https://pdm-project.org/latest/). You can recreate the same environment we used to train our $\delta$-models by following these steps:
+
+
+### Prerequisites
+- For Windows users: Install Ubuntu on WSL and ensure CUDA drivers are installed.
+- Python: 3.10
+
 ```sh
-pdm venv create
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt update
+sudo apt install python3.10
+python3.10 -m venv myenv  
+source .venv/bin/activate
+# pdm venv create
+pip install pdm
 pdm install
+# pdm lock --update-reuse 
+# pip install tensorflow==2.14.1
+# pip install tensorflow-probability==0.22
+# pip install absl-py
+# pdm install jaxlib==0.4.23 jax==0.4.23
+pip install ratinabox
+# - place TaskEnvironmentGym inside .venv/lib/python3.10/site-packages/ratinabox/contribs/
+pip install joblib
+pip install pettingzoo 
+pip install umap-learn
+
 ```
-
-
 ## Generating the Fixed Datasets
 
 The following command will train a policy on the desired environment before generating a dataset of transitions from the learned policy. For example,
 ```sh
-python -m sr.scripts.make_dataset --env Pendulum-v1 --dataset_path datasets/pendulum/sac/dataset.pkl --policy_path datasets/pendulum/sac/policy
+python -m dsm.scripts.make_dataset --env Pendulum-v1 --dataset_path <path/file> --policy_path <path>
 ```
 NOTE: The policy will be cached and if you don't specify the `--force` flag it will skip the policy optimization step.
 
-## Training a $\delta$-Model
-
-To train the $\delta$-model from the paper you can simply run:
 
 ```sh
-python -m dsm --workdir logdir
+# Pendulum
+python -m dsm.scripts.make_dataset_pendulum --env Pendulum-v1 --dataset_path datasets/pendulum/sac/dataset.pkl --policy_params_path datasets/pendulum/sac/policy_params.msgpack --force
+
+# Rat-In-A-Box environments
+# Ensure TaskEnvironmentGym.py is placed in .venv/packages/ratinabox/contribs
+
+# RiaB - Random policy
+python -m dsm.scripts.make_dataset_rat_PC_RANDOM --dataset_path datasets/ratinaboxPC/randomwalk/dataset.pkl 
+
+# High thigmotaxis movement policy
+python -m dsm.scripts.make_dataset_rat_PC_highTH --dataset_path datasets/ratinaboxPC/highTH/dataset.pkl
+
+# Goal in centre policy
+python -m dsm.scripts.make_dataset_rat_PC_goal --dataset_path datasets/ratinaboxPC/goal/sac/dataset.pkl --policy_path datasets/ratinaboxPC/goal/sac/policy --force 
+
+# teleport policy
+python -m dsm.scripts.make_dataset_rat_PC_TELEPORT --dataset_path datasets/ratinaboxPC/teleport/dataset.pkl 
+
+# random wal - with wall constraining movement
+python -m dsm.scripts.make_dataset_rat_PC_walls --dataset_path datasets/ratinaboxPC/walls/dataset.pkl 
 ```
 
-where `logdir` will store checkpoints of the saved model. Plots of the learned return distributions and various metrics will be logged periodically throughout training. These plots and metrics can be found in the experiment tracker (defaults to Aim).
+
+## Training a $\delta$-Model
+
+To train the $\delta$-model: \
+- configure wandb
+- change configs.py
+- ensure dataset path in datasets.py
+
+```sh
+python -m dsm --workdir logdir --fdl_config=base
+```
+where `logdir` will store checkpoints of the saved model. Plots of the learned return distributions and various metrics will be logged periodically throughout training. These plots and metrics can be found in the experiment tracker 
+
+```sh
+# config.py env = "Pendulum-v1"
+python -m dsm --workdir logdir_pendulum --fdl_config=base
+
+# config.py env = "Ratinabox-v0-pc-random"
+python -m dsm --workdir logdir-rat_50pc_random_walk --fdl_config=base
+
+# config.py env = "Ratinabox-v0-pc-goal"
+python -m dsm --workdir logdir-rat_50pc_goal --fdl_config=base
+
+
+# config.py env = "Ratinabox-v0-pc-highTH"
+python -m dsm --workdir logdir-rat_50pc_highTH --fdl_config=base
+
+# config.py env = "Ratinabox-v0-pc-teleport"
+python -m dsm --workdir logdir-rat_50pc_teleport --fdl_config=base
+
+# config.py env = "Ratinabox-v0-pc-walls"
+python -m dsm --workdir logdir-rat_50pc_walls --fdl_config=base
+
+
+# For  SR experiment
+# Change in configs.py: 
+# num_outer=1, distributional=False, inner_separate_discriminator=True, 
+# env = "Ratinabox-v0-pc-random" 
+- python -m dsm --workdir logdir-rat_50pc_random_SR --fdl_config=base   
+
+```
+
 
 ### Experiment Tracking
 
 You can switch how the experiment is logged either using Weights & Biases or Aim with the flag `--metric_writer {wandb, aim}`. Specific options for each of these methods can be configured via `--wandb.{save_code,tags,name,group,mode}` and `--aim.{repo=,experiment,log_system_params}` respectively.
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details.
-
-
-## Installation
-- If windows - install ubuntu on wsl , cuda drivers
-- sudo add-apt-repository ppa:deadsnakes/ppa
-- sudo apt update
-- sudo apt install python3.10
-- python3.10 -m venv myenv  (or) python3.10 -m pip install pdm, pdm venv create
-- source .venv/bin/activate
-(if needed 
-python -m ensurepip --upgrade
-python -m pip install --upgrade pip
-)
-- pip install pdm
-- pdm install ( pdm lock --update-reuse (if needed))
-If needed - version mismatch
-(
-- pip install tensorflow==2.14.1
-- pip install tensorflow-probability==0.22
-- pip install absl-py
-- pdm install jaxlib==0.4.23 jax==0.4.23
-)
-- pip install ratinabox
-- place TaskEnvironmentGym inside .venv/lib/python3.10/site-packages/ratinabox/contribs/
-- pip install joblib
-- pip install pettingzoo 
-
-
 
 ## Thesis
 
-- source .venv/bin/activate
-- cd dsm-hippocampus
+Main figures in notebooks/
 
-
-### Pendulum
-- Dataset:  
- python -m dsm.scripts.make_dataset --env Pendulum-v1 --dataset_path datasets/pendulum/sac/dataset.pkl --policy_params_path datasets/pendulum/sac/policy_params.msgpack --force
-- changes in config.py and datasets.py
-- Build model: python -m dsm --workdir logdir_pendulum --fdl_config=base
-- Inference : python load_model_compute_distr.py --fdl_config=base   #--workdir logdir 
-
-Tested in MountainCarContinuous:
-python -m dsm.scripts.make_dataset --env MountainCarContinuous-v0 --dataset_path datasets/mountaincar/sac/dataset.pkl --policy_path datasets/mountaincar/sac/policy \\
-python -m dsm --workdir logdir-car --fdl_config=base
-
-************************************************************************
-
-### RatInABox
-
-python -m dsm.scripts.make_dataset_rat_PC_RANDOM --dataset_path datasets/ratinaboxPC/randomwalk/dataset.pkl 
-python -m dsm --workdir logdir-rat_50pc_random_walk --fdl_config=base
--------------------------------------------------------------------------------------------------------------
-python -m dsm.scripts.make_dataset_rat_PC_highTH --dataset_path datasets/ratinaboxPC/highTH/dataset.pkl
-python -m dsm --workdir logdir-rat_50pc_highTH --fdl_config=base
--------------------------------------------------------------------------------------------------------------
-python -m dsm.scripts.make_dataset_rat_PC_goal --dataset_path datasets/ratinaboxPC/goal/sac/dataset.pkl --policy_path datasets/ratinaboxPC/goal/sac/policy --force 
-python -m dsm --workdir logdir-rat_50pc_goal --fdl_config=base
--------------------------------------------------------------------------------------------------------------
-python -m dsm.scripts.make_dataset_rat_PC_TELEPORT --dataset_path datasets/ratinaboxPC/teleport/dataset.pkl 
-python -m dsm --workdir logdir-rat_50pc_teleport --fdl_config=base
--------------------------------------------------------------------------------------------------------------
-python -m dsm.scripts.make_dataset_rat_PC_walls --dataset_path datasets/ratinaboxPC/walls/dataset.pkl 
-python -m dsm --workdir logdir-rat_50pc_walls --fdl_config=base
--------------------------------------------------------------------------------------------------------------
-
-
-For comparison with SR experiment
-- In configs.py, changed num_outer=1, distributional=False, inner_separate_discriminator=True 
-- python -m dsm --workdir logdir-rat_50pc_random_SR_2 --fdl_config=base   
-
-------------------------------------------------------------------------
-************************************************************************
-major changes when experimenting with different inputs / env to the DSM model <br>
-- dsm/scripts/make_dataset.py
-- dataset path - in dsm/datasets.py
-- configs.py env="Ratinabox-v0-pc-teleport", or env="Ratinabox-v0-pc-random",
-- types.py
-- envs.py - if adding walls or changing goals of env - mostly unnecessary if dataset created with goal unless we want to compute reward distr metrics?
-- train.py - NUM_STATE_DIM_CELLS (if changing no of PCs)
+env="Ratinabox-v0-pc-teleport", or env="Ratinabox-v0-pc-random",
+If new environment:
+- make changes to dsm/types.py, dsm/envs.py
 - add codefile to /distributional-sr/dsm/plotting- (functions for source state and plotting) for the module (eg - ratinabox.py) 
 - add env in _PLOT_BY_ENVIRONMENT in /distributional-sr/dsm/plotting/__init__.py
-- MLP output  -- replace math.prod(observation_spec.shape) everywhere with desired shape in train.py
+
+If changing number of place cells 
+- change NUM_STATE_DIM_CELLS in train.py 
 - mlp_model_atom.num_outputs in model_viz_xx.ipynb
 
-- monte carlo returns and rewards.py - not used
-************************************************************************
--------------------------------------------------------------------------
-
-MAIN CODE for DSM here (dataset should be creaed first, and wandb configured)
-- python -m dsm --workdir logdir --fdl_config=base
-
-Environments <br>
-> distributional-sr-nav/blob/main/dsm/envs.py
-- https://www.gymlibrary.dev/environments/classic_control/pendulum/
-- https://github.com/RatInABox-Lab/RatInABox/blob/main/ratinabox/contribs/TaskEnv_example_files/TaskEnvironment_basics.md
-
-- DATASET FOLDER DEFINED IN datasets.py FR EACH ENV
-
-************************************************************************
-
-
-Errors (In development of another dataset with different number of place cells)
-------
-ScopeParamShapeError: Initializer expected to generate shape (, 32) but got shape (, 32) 
-- In train.py: change num_state_dims or   -- replace math.prod(observation_spec.shape) everywhere with desired shape in train.py
+--------------------------------------------
 
 
 
-Saved Rat dataset has 1 goal - in the centre
-so the dataset and generated dataset also regenerates those trajectories - all towards the centre
-make multiple goals in env?
-or is that something to investigate? - how it reacts to novel rewards - (done for pendulum in original paper)
+## Future Work
+
+- **Hyperparameter Tuning** Investigate the optimal hyperparameters of the DSM concerning the RatInABox environment
+- **Improve Representation Disentanglement:** Implement constraints like positive activations or energy regularization to enhance efficiency and interpretability.
+- **Incorporate Features for BIological Plausibility :** Adding recurrent connections could improve its .
+- **Explore Behavioral Feature Representation:** Investigate whether DSM's latent variables capture distinct behavioral features like boundary adherence or goal-directed movement.
+- **Test in Animal Models:** Validate DSM predictions in new experiments with rodent experiments in virtual reality, manipulating environmental cues.
+
+## Other
 
 
+Model: [A Distributional Analogue to the Successor Representation](https://arxiv.org/abs/2402.08530)
 
+Gamma models 
+- https://gammamodels.github.io/ 
+-  https://github.com/jannerm/gamma-models/blob/main/scripts/gamma-pendulum.ipynb
+
+RatInABox environment - Tom M George, Mehul Rastogi, William de Cothi, Claudia Clopath, Kimberly Stachenfeld, Caswell Barry. "RatInABox, a toolkit for modelling locomotion and neuronal activity in continuous environments" (2024), eLife, https://doi.org/10.7554/eLife.85274 .
 
 

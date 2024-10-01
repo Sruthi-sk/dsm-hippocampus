@@ -1,3 +1,7 @@
+# test changes
+# import importlib
+# importlib.reload(modelviz_pendulum_utils)
+
 from dsm.state import FittedValueTrainState
 
 import jax
@@ -246,6 +250,12 @@ def plot_neuron_ratemaps_from_activationlayerlist(activations_layer_list, figlab
 
 ####################################################################
 # plot generated samples directly (for pendulum env)
+# img_dict = plotting.plot_samples(state.generator, jax.random.PRNGKey(0),config=config)
+# src_idx = 0
+# plot_key = list(img_dict.keys())[src_idx]
+# sample_plotarray = img_dict[plot_key]
+# plt.imshow(sample_plotarray)
+
 from dsm import datasets
 def plot_samples_dsm(samples,source, make_dataset=False,atom='all'):
     """ Visualize the generated samples in the Pendulum environment. Also the original dataset the model was trained on."""
@@ -271,7 +281,8 @@ def plot_samples_dsm(samples,source, make_dataset=False,atom='all'):
     # Plot atom scatter & kde
     # plots generated samples - each colour represents atom?
 
-    cmap = plt.get_cmap("Dark2") 
+    # cmap = plt.get_cmap("Dark2") 
+    cmap = plt.get_cmap("tab10") 
     if isinstance(atom, int):
         thetas = np.arctan2(samples[atom, :, 1], samples[atom, :, 0]) % (2 * np.pi)
         velocities = samples[atom, :, -1]
@@ -357,7 +368,7 @@ def plot_predictions_atoms(config, latent_rng_seed, model_generator, source_stat
         # ax.set_aspect('equal')
         xs, ys = positions_pred[:,0], positions_pred[:,1]
         colors = range(len(xs))  # Create a list of numbers from 0 to len(xs)-1
-        
+
         ax.scatter(xs, ys, alpha=0.2, c=colors, cmap='viridis')  # Use the numbers as colors
         ax.scatter(xs[0], ys[0], color='k',s=20)
         ax.scatter(xs[-1], ys[-1], color='red',s=25)
@@ -442,6 +453,7 @@ def get_multiple_predictions_atoms(config, latent_rng_seed, model_generator, sou
     else:
         assert isinstance(atoms_sel, list)
     preds_all_atoms_list = []
+    debug_shape = 1
     for atom_idx in tqdm(atoms_sel, desc='Processing atoms'):
         atom_params = model_viz_loaders.extract_params_ith_atom(model_generator, atom_idx, config.num_outer)
         activations_all = []
@@ -462,7 +474,9 @@ def get_multiple_predictions_atoms(config, latent_rng_seed, model_generator, sou
             activations_all.append(preds_for_state)
         
         preds_all_atom = np.array(activations_all)
-        print(preds_all_atom.shape)
+        if debug_shape:
+            print('debug shape: ',preds_all_atom.shape)
+            debug_shape=0
         
         # Extract thetas and velocities
         thetas = np.arctan2(preds_all_atom[:, :, 1], preds_all_atom[:, :, 0]) % (2 * np.pi)
@@ -532,3 +546,140 @@ def plot_multiple_predictions_atoms(preds_all_atoms_list, num_samples=10, title=
 #     cbar.ax.xaxis.set_ticks_position('top')
 #     plt.subplots_adjust(wspace=0.8, hspace=0.2)
 # plt.show()
+
+
+#####################################################################
+
+# # Exploring actions and rewards of the 10 atoms for the samples above from  one source state
+
+# # plotting utils
+# from matplotlib.cm import ScalarMappable
+# from matplotlib.colors import Normalize
+# atom_idx_values = np.arange(samples.shape[0])
+# norm = Normalize(vmin=min(atom_idx_values), vmax=max(atom_idx_values))
+# sm = ScalarMappable(cmap='tab10', norm=norm)
+
+# policy = datasets.make_policy(config.env)
+# def apply_policy_to_batch(batch):
+#     keys,samples = batch
+#     return jax.lax.map(lambda x: policy(x[0],x[1]),(keys,samples))
+# keys = jax.random.split(jax.random.PRNGKey(0), np.prod(samples.shape[:-1]))
+# keys = jnp.array(keys).reshape(*samples.shape[:-1], -1)
+# actions = jax.lax.map(apply_policy_to_batch, (keys,samples))[1]
+# print('debug actions min max',np.min(actions), np.max(actions))
+
+# # # Assuming actions[1] has shape (10, 64, 1, 1)
+# # # Reshape it to (10, 64)
+# # reshaped_actions = actions.reshape(actions.shape[0], -1)
+# # # for i in range(10):
+# # #     plt.scatter([i]*len(reshaped_actions[i]), reshaped_actions[i])
+# # x_coords = np.repeat(np.arange(reshaped_actions.shape[0]), reshaped_actions.shape[1])
+# # # Flatten reshaped_actions) for plotting
+# # flat_actions = reshaped_actions.flatten()
+# # plt.scatter(x_coords, flat_actions, c=x_coords, alpha=0.5, cmap='viridis')
+# # plt.xlabel('Atom index')
+# # plt.ylabel('Action value')
+# # plt.show()
+
+# rewards = jax.vmap(jax.vmap(reward_fn))(samples, actions).squeeze()
+
+# reshaped_rewards = rewards.reshape(rewards.shape[0], -1)
+# # for i in range(10):
+# #     plt.scatter([i]*len(reshaped_actions[i]), reshaped_actions[i])
+# x_coords = np.repeat(np.arange(reshaped_rewards.shape[0]), reshaped_rewards.shape[1])
+# # Flatten reshaped_actions) for plotting
+# flat_rewards = reshaped_rewards.flatten()
+# plt.scatter(x_coords, flat_rewards, c=x_coords, alpha=0.5, cmap='viridis')
+# plt.xlabel('Atom index')
+# plt.ylabel('Reward value')
+# plt.show()
+
+# reward_mean = rewards.mean(axis=-1) / (1.0 - config.gamma)  
+# reward_mean.shape
+# import seaborn as sns
+# sns.histplot(reward_mean, kde=True, color='blue')
+
+
+###########################################################################
+
+# # Plot with respect to theta arctan(neuron1 output, neuron2 output)
+# # from mpl_toolkits.axes_grid1 import make_axes_locatable
+# n = len(activations_layer_all_atoms)
+# cols = 5 
+# rows = n // cols 
+# position = range(1,n + 1)
+# fig = plt.figure(figsize=(10,4))
+
+# # Find global min and max
+# global_min = -np.pi
+# global_max = np.pi
+# scatters = []
+# plt.subplots_adjust(wspace=0.5, hspace=0.5)
+
+# for k, activations_layer in enumerate(activations_layer_all_atoms): 
+#     ax = fig.add_subplot(rows, cols, position[k])
+#     # ax.set_aspect('auto') #ax.set_box_aspect(1)  #ax.set_aspect('equal')
+#     label = f'Atom: {k}'
+#     theta = np.arctan2(activations_layer[:, 0], activations_layer[:, 1])
+#     activations_2d = theta.reshape(len(thetadot_all), len(theta_all))
+#     # scatter = ax.imshow(activations_2d, cmap='inferno', vmin=global_min, vmax=global_max, aspect='auto')
+#     # ax.set_aspect('equal')
+#     scatter = ax.contourf(theta_all, thetadot_all, activations_2d, cmap='inferno', levels=20, 
+#                           vmin=global_min, vmax=global_max)
+#     ax.set_box_aspect(1)
+#     scatters.append(scatter)
+#     ax.set_title(f'Atom{k}')
+#     plt.xticks([]), plt.yticks([]) 
+#     ax.set_xlabel('θ')
+#     ax.set_ylabel('θdot')
+
+# # Create colorbar as a common for all subplots.
+# fig.colorbar(scatters[0], ax=fig.get_axes(), label='Predicted Orientation (θ)')
+# # fig.suptitle('Theta predictions')
+# plt.show()
+
+#################################################################################
+
+# # Plot with respect to angular velocity
+# # single sample prediction from each atom in a subplot 
+
+# n = len(activations_layer_all_atoms) # 10
+# cols = 5 
+# rows = n // cols 
+# position = range(1,n + 1)
+# fig = plt.figure(figsize=(10,4))
+# # Find global min and max - angular velocity
+# global_min = -8
+# global_max = 8
+# norm = mcolors.Normalize(vmin=global_min, vmax=global_max)
+# scatters = []
+# plt.subplots_adjust(wspace=0.5, hspace=0.5)
+# for k, activations_layer in enumerate(activations_layer_all_atoms): 
+#     ax = fig.add_subplot(rows, cols, position[k])
+#     label = f'Atom: {k}'
+#     thetadot = activations_layer[:, 2]
+#     activations_2d = thetadot.reshape(len(thetadot_all), len(theta_all))
+#     # scatter = ax.imshow(activations_2d, cmap='inferno', vmin=global_min, vmax=global_max, aspect='auto')
+#     # ax.set_aspect('equal')
+#     scatter = ax.contourf(theta_all, thetadot_all, activations_2d, cmap='inferno', levels=20, norm=norm)
+#     ax.set_box_aspect(1)
+#     scatters.append(scatter)
+#     ax.set_title(f'Atom{k}')
+#     plt.xticks([]), plt.yticks([]) 
+#     ax.set_xlabel('θ')
+#     ax.set_ylabel('θdot')
+# # Create colorbar as a common for all subplots.
+# # fig.colorbar(scatters[0], ax=fig.get_axes(), label='Predicted Angular Velocity (θdot)', norm=norm)
+# # Create a ScalarMappable for the colorbar with the global norm and colormap
+# sm = plt.cm.ScalarMappable(cmap='inferno', norm=norm)
+# sm.set_array([])  # This is required to create the colorbar
+# fig.colorbar(sm, ax=fig.get_axes(), label='Predicted Angular Velocity (θdot)')
+# # fig.suptitle('Thetadot predictions')
+# plt.show()
+
+# # individual colorbars
+# # neuron_idx=2 # angular velocity
+# # modelviz_pendulum_utils.plot_neuron_ratemaps_from_activationlayerlist(activations_layer_all_atoms, 
+# #                                                                       'Atom', neuron_idx, 
+# #                                                                       theta_all, thetadot_all, normalize=False) 
+# #                                                                         #,title='Velocity predictions'
