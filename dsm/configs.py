@@ -127,7 +127,8 @@ def base() -> Config:
         inner_kernel=kernels.RationalQuadraticKernel(bandwidths=(0.2, 0.5, 1.0, 2.0, 5.0)),
         inner_kernel_adaptive_bandwidth=False,
         inner_distance_fn=kernels.euclidean_distance,
-        inner_separate_discriminator=False,  #CHANGE for SR
+        inner_separate_discriminator=False,  #for DSM
+        # inner_separate_discriminator=True,  #for SR
         inner_linear_kernel=False,
         gamma=0.95,
         horizon=6, # Optimize?
@@ -136,6 +137,7 @@ def base() -> Config:
         latent_dims=5, # Optimize?
         # num_outer=51,
         num_outer=10, #CHANGE for SR to 1
+        # num_outer=1, 
         # num_inner=32,
         num_inner=5, # Optimize?
         # num_grad_updates=2_500_000,
@@ -150,7 +152,8 @@ def base() -> Config:
         plot_every=25000,
         plot_num_samples=64,
         cumulant_is_source_state=True,
-        distributional=True, #CHANGE for SR
+        distributional=True, 
+        # distributional=False, # for SR
     )
 
 

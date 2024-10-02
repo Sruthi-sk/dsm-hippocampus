@@ -122,7 +122,7 @@ python -m dsm --workdir logdir-rat_50pc_walls --fdl_config=base
 # Change in configs.py: 
 # num_outer=1, distributional=False, inner_separate_discriminator=True, 
 # env = "Ratinabox-v0-pc-random" 
-- python -m dsm --workdir logdir-rat_50pc_random_SR --fdl_config=base   
+python -m dsm --workdir logdir-rat_50pc_random_SR --fdl_config=base   
 
 ```
 
@@ -132,9 +132,18 @@ python -m dsm --workdir logdir-rat_50pc_walls --fdl_config=base
 You can switch how the experiment is logged either using Weights & Biases or Aim with the flag `--metric_writer {wandb, aim}`. Specific options for each of these methods can be configured via `--wandb.{save_code,tags,name,group,mode}` and `--aim.{repo=,experiment,log_system_params}` respectively.
 
 
-## Thesis
+### Main figures in thesis
 
-Main figures in notebooks
+Change environment in configs.py when using the notebooks, else ERRORS: Initializer expected to generate shape () but () was generated
+
+All experiments in ```notebooks/```
+- `model_viz_pendulum.ipynb` contains the code for all pendulum experiments
+- `model_viz_RiaB_xxx.ipynb` where xxx represents each policy-env-model, contains the code for all models trained on different policies in RiaB environments
+- `model_viz_RiaB_DSM_all.ipynb` contains the code for comparing the PCs when environment is distorted (by changing DSM input activities incrementally)
+- `model_viz_RiaB_SR_randomwalk.ipynb` contains the code to compare the DSM representations with SR representations of preddicted PCs
+These noteboos use supporting codes in `model_viz_loaders.py` and `model_viz_functions_pendulum.py`/ `model_viz_functions_riab.py`
+
+Some figures shown in `Results.md`
 
 If new environment: 
 - make changes to dsm/types.py, dsm/envs.py

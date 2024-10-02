@@ -59,7 +59,7 @@ def main(
     assert env_id == "Ratinabox-v0-pc-random"
 
     folder_dataset_path = os.path.dirname(dataset_path)
-    # base_path = 'datasets/ratinaboxPCrandom/'  # dataset_path
+    # base_path = 'datasets/ratinaboxPC/'  # dataset_path
     if not os.path.exists(folder_dataset_path):
         os.makedirs(folder_dataset_path)
     logger = logging.getLogger('my_logger')

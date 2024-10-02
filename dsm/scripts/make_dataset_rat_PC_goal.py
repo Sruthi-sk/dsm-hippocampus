@@ -197,10 +197,14 @@ def main(
     transitions = [timestep_t] 
     # timestep_t.observation =timestep_t.observation['agent_0']
 
+    # for i in range(int(NUM_SECS  / Ag.dt)):  # 5 minutes
+    #     Ag.update()
+    #     placecells.update()
     episode_index, episode_return = 0, 0.0
     num_eval_steps = int(EVAL_TIME/end_ep_time)+1
     # print('debug timestep_t.observation', timestep_t, actor.firingrate_torch.detach().numpy())
-    for step in tqdm.tqdm(range(num_eval_steps)):
+    # for step in tqdm.tqdm(range(num_eval_steps)):
+    for step in tqdm.tqdm(range(int(EVAL_TIME/ ag.dt))):
         # rng_key, proposed_action = policy_func(rng_key, timestep_t.observation)
         # rng_key, proposed_action = policy_func(rng_key, jnp.squeeze(timestep_t.observation))
 

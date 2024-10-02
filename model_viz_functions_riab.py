@@ -281,7 +281,7 @@ def plot_samples(PCs, dataset_observation, samples,source, make_dataset=False,at
         fig, axs = plt.subplots(nrows=1, ncols=1, figsize=(3, 3))
     # Plot atom scatter & kde
     # plots generated samples - each colour represents atom?
-    # cmap = plt.get_cmap(cmap1)  #"Dark2"# pyright: ignore
+    cmap = plt.get_cmap("tab10")   #"Dark2"# pyright: ignore
     if samples.shape[0]==1:
         atom = 0
     if isinstance(atom, int):
@@ -478,13 +478,13 @@ def plot_multiple_predictions_atoms(preds_all_atoms_list, num_samples=10, title=
     for k, positions_pred in enumerate(preds_all_atoms_list): 
         ax = axes[k//cols, k % cols]
         for i in range(num_samples):
-            # print('debug',positions_pred[i].shape)
+            # print('debug',positions_pred[i].shape) # (5,2)
             xs, ys = positions_pred[i][:, 0], positions_pred[i][:, 1]
             colors = range(len(xs))  # Create a list of numbers from 0 to len(xs)-1
             
-            ax.scatter(xs, ys, alpha=0.2, c=colors, cmap='viridis')  # Use the numbers as colors
-            ax.scatter(xs[0], ys[0], color='k', s=20,alpha=0.2)
-            ax.scatter(xs[-1], ys[-1], color='red', s=25,alpha=0.2)
+            ax.scatter(xs, ys, alpha=0.5, c=colors, cmap='viridis')  # Use the numbers as colors
+            ax.scatter(xs[0], ys[0], color='k', s=20,alpha=0.7)
+            ax.scatter(xs[-1], ys[-1], color='red', s=25,alpha=0.7)
             ax.set_xlim([0,1])
             ax.set_ylim([0,1])
             ax.set_xlabel('X')
@@ -526,11 +526,11 @@ def plot_multiple_predictions_atoms(preds_all_atoms_list, num_samples=10, title=
 ################################################################################################################
 
 
-# def euclidean_distance(arr1, arr2):
-#     return np.sqrt(np.sum((arr1 - arr2) ** 2))
+def euclidean_distance(arr1, arr2):
+    return np.sqrt(np.sum((arr1 - arr2) ** 2))
 
-# def cosine_similarity(arr1, arr2):
-#     return np.dot(arr1, arr2) / (np.linalg.norm(arr1) * np.linalg.norm(arr2))
+def cosine_similarity(arr1, arr2):
+    return np.dot(arr1, arr2) / (np.linalg.norm(arr1) * np.linalg.norm(arr2))
 
 # def compute_distsim_trueratemap_vs_predratemap_allneurons(true_ratemap_all,  ratemap_model, neuron_list,metric='cosine'):
 #     """Computes distance/similarity for each neuron in the list between the two ratemaps."""
